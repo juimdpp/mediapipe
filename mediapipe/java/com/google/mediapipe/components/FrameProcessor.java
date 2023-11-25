@@ -204,6 +204,8 @@ public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor
   public void addVideoStreams(
       long parentNativeContext, @Nullable String inputStream, @Nullable String outputStream) {
 
+    Log.i(TAG, "add video stream" + outputStream);
+
     videoInputStream = inputStream;
     videoOutputStream = outputStream;
 
@@ -223,13 +225,18 @@ public class FrameProcessor implements TextureFrameProcessor, AudioDataProcessor
                 // Note: each consumer will release its TextureFrame, so each gets a separate object
                 // (though they all reference the same data).
                 TextureFrame frame = PacketGetter.getTextureFrame(packet);
-                if (Log.isLoggable(TAG, Log.VERBOSE)) {
-                  Log.v(
+                Log.i(
                       TAG,
                       String.format(
                           "Output tex: %d width: %d height: %d to consumer %h",
                           frame.getTextureName(), frame.getWidth(), frame.getHeight(), consumer));
-                }
+                // if (Log.isLoggable(TAG, Log.VERBOSE)) {
+                //   Log.v(
+                //       TAG,
+                //       String.format(
+                //           "Output tex: %d width: %d height: %d to consumer %h",
+                //           frame.getTextureName(), frame.getWidth(), frame.getHeight(), consumer));
+                // }
                 consumer.onNewFrame(frame);
               }
             }

@@ -16,6 +16,15 @@ output_stream: "output_video"
 # real-time mobile applications. It also eliminates unnecessarily computation,
 # e.g., the output produced by a node may get dropped downstream if the
 # subsequent nodes are still busy processing previous inputs.
+
+profiler_config {
+  trace_enabled: true
+  enable_profiler: true
+  trace_log_interval_count: 200
+  trace_log_path: "/sdcard/mediapipe/log_",
+  enable_stream_latency: true
+}
+
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"

@@ -33,21 +33,32 @@ public class PermissionHelper {
   private static final String READ_EXTERNAL_STORAGE_PERMISSION =
       Manifest.permission.READ_EXTERNAL_STORAGE;
 
+  private static final String WRITE_EXTERNAL_STORAGE_PERMISSION =
+      Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
+  private static final String MANAGE_EXTERNAL_STORAGE_PERMISSION =
+      Manifest.permission.MANAGE_EXTERNAL_STORAGE;
+
   private static final int REQUEST_CODE = 0;
 
   public static boolean permissionsGranted(Activity context, String[] permissions) {
     for (String permission : permissions) {
       int permissionStatus = ContextCompat.checkSelfPermission(context, permission);
       if (permissionStatus != PackageManager.PERMISSION_GRANTED) {
+        Log.i(TAG, permission + "not granted. Requesting...");
         return false;
       }
     }
+    Log.i(TAG, "All permissions granted!");
     return true;
   }
 
   public static void checkAndRequestPermissions(Activity context, String[] permissions) {
+    Log.i(TAG, "HYUNSOO, granted? " + permissions[0]);
     if (!permissionsGranted(context, permissions)) {
       ActivityCompat.requestPermissions(context, permissions, REQUEST_CODE);
+    } else {
+      Log.i(TAG, "HYUNSOO, not granted " + permissions[0]);
     }
   }
 
@@ -92,6 +103,21 @@ public class PermissionHelper {
       Log.d(TAG, "checkAndRequestReadExternalStoragePermissions");
       checkAndRequestPermissions(context, new String[] {READ_EXTERNAL_STORAGE_PERMISSION});
     }
+  }
+
+  public static void checkAndRequestExternalStoragePermissions(Activity context) {
+    Log.i(TAG, "checkAndRequestStoragePermissions HYUNSOO");
+    checkAndRequestPermissions(context, new String[] {READ_EXTERNAL_STORAGE_PERMISSION, 
+                                                      WRITE_EXTERNAL_STORAGE_PERMISSION,
+                                                      MANAGE_EXTERNAL_STORAGE_PERMISSION, CAMERA_PERMISSION});
+    
+  }
+
+  public static boolean externalStoragePermissionGranted(Activity context) {
+    Log.i(TAG, "checkAndRequestStoragePermissions granted HYUNSOO");
+    return permissionsGranted(context, new String[] {READ_EXTERNAL_STORAGE_PERMISSION, 
+                                                      WRITE_EXTERNAL_STORAGE_PERMISSION,
+                                                      MANAGE_EXTERNAL_STORAGE_PERMISSION, CAMERA_PERMISSION});
   }
 
   /** Called by context when permissions request has been completed. */

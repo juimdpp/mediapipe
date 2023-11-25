@@ -175,6 +175,8 @@ class FlowLimiterCalculator : public CalculatorBase {
     Timestamp input_bound = InputTimestampBound(cc);
     auto first_range = std::prev(allowed_.upper_bound(input_bound));
     allowed_.erase(allowed_.begin(), first_range);
+    const auto p1 = std::chrono::system_clock::now();
+    LOG(INFO) << "FlowLimiterCalculator Process started " << (p1.time_since_epoch()).count();
     return absl::OkStatus();
   }
 

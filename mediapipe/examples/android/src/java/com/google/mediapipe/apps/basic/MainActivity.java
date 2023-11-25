@@ -117,6 +117,7 @@ public class MainActivity extends AppCompatActivity {
             applicationInfo.metaData.getBoolean("flipFramesVertically", FLIP_FRAMES_VERTICALLY));
 
     PermissionHelper.checkAndRequestCameraPermissions(this);
+    
   }
 
   // Used to obtain the content view for this application. If you are extending this class, and

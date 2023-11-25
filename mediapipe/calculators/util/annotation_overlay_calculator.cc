@@ -348,7 +348,8 @@ absl::Status AnnotationOverlayCalculator::Process(CalculatorContext* cc) {
     uchar* image_mat_ptr = image_mat->data;
     MP_RETURN_IF_ERROR(RenderToCpu(cc, target_format, image_mat_ptr));
   }
-
+  const auto p1 = std::chrono::system_clock::now();
+  LOG(INFO) << "AnnotationOverlayCalculator Process started " << (p1.time_since_epoch()).count();
   return absl::OkStatus();
 }
 
