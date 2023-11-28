@@ -142,6 +142,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:from_image_calculator",
         "//mediapipe/calculators/util:association_norm_rect_calculator",
         "//mediapipe/calculators/util:hyunsoo_logger_calculator",
+        "//mediapipe/calculators/util:hyunsoo_forced_input_calculator",
         "//mediapipe/modules/pose_detection:pose_detection_gpu",
     ],
 )
@@ -165,6 +166,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:from_image_calculator",
         "//mediapipe/calculators/util:hyunsoo_logger_calculator",
+        "//mediapipe/calculators/util:hyunsoo_forced_input_calculator",
         "//mediapipe/modules/pose_detection:pose_detection_cpu",
     ],
 )

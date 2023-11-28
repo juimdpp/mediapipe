@@ -115,28 +115,6 @@ output_stream: "ROI_FROM_LANDMARKS:pose_rects_from_landmarks"
 # Regions of interest calculated based on pose detections. (NormalizedRect)
 output_stream: "ROI_FROM_DETECTION:pose_rects_from_palm_detection" 
 
-# When the optional input side packet "use_prev_landmarks" is either absent or
-# set to true, uses the landmarks on the previous image to help localize
-# landmarks on the current image.
-node {
-  calculator: "GateCalculator"
-  input_side_packet: "ALLOW:use_prev_landmarks"
-  input_stream: "prev_pose_rect_from_landmarks"
-  output_stream: "gated_prev_pose_rect_from_landmarks"
-  options: {
-    [mediapipe.GateCalculatorOptions.ext] {
-      allow: true
-    }
-  }
-}
-
-# Checks if there's previous pose rect calculated from landmarks.
-node: {
-  calculator: "PacketPresenceCalculator"
-  input_stream: "PACKET:gated_prev_pose_rect_from_landmarks"
-  output_stream: "PRESENCE:prev_pose_rect_from_landmarks_is_present"
-}
-
 # Calculates size of the image.
 node {
   calculator: "ImagePropertiesCalculator"
@@ -144,17 +122,12 @@ node {
   output_stream: "SIZE:image_size"
 }
 
-# Drops the incoming image if the pose has already been identified from the
-# previous image. Otherwise, passes the incoming image through to trigger a new
-# round of pose detection.
 node {
-  calculator: "GateCalculator"
+  calculator: "HyunsooLoggerCalculator"
   input_stream: "image"
-  input_stream: "DISALLOW:prev_pose_rect_from_landmarks_is_present"
-  output_stream: "image_for_pose_detection"
   options: {
-    [mediapipe.GateCalculatorOptions.ext] {
-      empty_packets_as_allow: true
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "PoseDetectionGpu-before"
     }
   }
 }
@@ -162,8 +135,17 @@ node {
 # Detects poses.
 node {
   calculator: "PoseDetectionGpu"
-  input_stream: "IMAGE:image_for_pose_detection"
+  input_stream: "IMAGE:image"
   output_stream: "DETECTIONS:all_pose_detections"
+}
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "all_pose_detections"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "PoseDetectionGpu-after"
+    }
+  }
 }
 
 # Makes sure there are no more detections than provided num_pose (given through option).
@@ -181,7 +163,7 @@ node {
 # Extracts image size.
 node {
   calculator: "ImagePropertiesCalculator"
-  input_stream: "IMAGE_GPU:image_for_pose_detection"
+  input_stream: "IMAGE_GPU:image"
   output_stream: "SIZE:pose_detection_image_size"
 }
 
@@ -219,18 +201,22 @@ node {
   output_stream: "ITERABLE:pose_rects_from_palm_detections"
 }
 
-# Performs association between NormalizedRect vector elements from previous
-# image and rects based on palm detections from the current image. This
-# calculator ensures that the output hand_rects vector doesn't contain
-# overlapping regions based on the specified min_similarity_threshold.
 node {
-  calculator: "AssociationNormRectCalculator"
-  input_stream: "pose_rects_from_palm_detections"
-  input_stream: "gated_prev_pose_rect_from_landmarks"
-  output_stream: "pose_rects"
+  calculator: "HyunsooForcedInputCalculator"
+  input_stream: "INPUT_ITERABLE:pose_rects_from_palm_detections"
+  output_stream: "OUTPUT_ITERABLE:forced_pose_rects"
   options: {
-    [mediapipe.AssociationCalculatorOptions.ext] {
-      min_similarity_threshold: 0.5
+    [mediapipe.HyunsooForcedInputCalculatorOptions.ext] {
+      number_detections: 2
+    }
+  }
+}
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "forced_pose_rects"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "Before-Loop"
     }
   }
 }
@@ -242,7 +228,7 @@ node {
 # elements in the vector have been processed.
 node {
   calculator: "BeginLoopNormalizedRectCalculator"
-  input_stream: "ITERABLE:pose_rects"
+  input_stream: "ITERABLE:forced_pose_rects"
   input_stream: "CLONE:0:image"
   input_stream: "CLONE:1:image_size"
   output_stream: "ITEM:single_pose_rect"
@@ -250,6 +236,16 @@ node {
   output_stream: "CLONE:1:image_size_for_landmarks"
   output_stream: "BATCH_END:pose_rects_timestamp"
 }
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "single_pose_rect"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "Loop-before-landmark"
+    }
+  }
+}
+
 
 # Detects pose landmarks within specified region of interest of the image.
 node {
@@ -262,6 +258,15 @@ node {
   output_stream: "AUXILIARY_LANDMARKS:unfiltered_auxiliary_landmarks"
   output_stream: "WORLD_LANDMARKS:unfiltered_world_landmarks"
   # output_stream: "SEGMENTATION_MASK:unfiltered_segmentation_mask"
+}
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "unfiltered_pose_landmarks"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "Loop-after-landmark"
+    }
+  }
 }
 
 # Smoothes landmarks to reduce jitter.
@@ -276,6 +281,16 @@ node {
   output_stream: "FILTERED_AUX_NORM_LANDMARKS:auxiliary_landmarks"
   output_stream: "FILTERED_WORLD_LANDMARKS:pose_world_landmarks"
 }
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "pose_landmarks"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "Loop-after-filtering"
+    }
+  }
+}
+
 
 # Collects a set of landmarks for each pose into a vector. Upon receiving the
 # BATCH_END timestamp, outputs the vector of landmarks at the BATCH_END
@@ -285,6 +300,15 @@ node {
   input_stream: "ITEM:pose_landmarks"
   input_stream: "BATCH_END:pose_rects_timestamp"
   output_stream: "ITERABLE:multi_pose_landmarks"
+}
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "multi_pose_landmarks"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "After-loop"
+    }
+  }
 }
 
 # Collects a set of world landmarks for each pose into a vector. Upon receiving
@@ -314,20 +338,4 @@ node {
   input_stream: "ITEM:pose_rect_from_landmarks"
   input_stream: "BATCH_END:pose_rects_timestamp"
   output_stream: "ITERABLE:pose_rects_from_landmarks"
-}
-
-# Caches pose rects calculated from landmarks, and upon the arrival of the next
-# input image, sends out the cached rects with timestamps replaced by that of
-# the input image, essentially generating a packet that carries the previous
-# pose rects. Note that upon the arrival of the very first input image, a
-# timestamp bound update occurs to jump start the feedback loop.
-node {
-  calculator: "PreviousLoopbackCalculator"
-  input_stream: "MAIN:image"
-  input_stream: "LOOP:pose_rects_from_landmarks"
-  input_stream_info: {
-    tag_index: "LOOP"
-    back_edge: true
-  }
-  output_stream: "PREV_LOOP:prev_pose_rect_from_landmarks"
 }
