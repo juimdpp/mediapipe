@@ -135,8 +135,13 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/core:packet_presence_calculator",
         "//mediapipe/calculators/core:previous_loopback_calculator",
         "//mediapipe/calculators/core:split_vector_calculator",
+        "//mediapipe/calculators/core:clip_vector_size_calculator",
+        "//mediapipe/calculators/core:begin_loop_calculator",
+        "//mediapipe/calculators/core:end_loop_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:from_image_calculator",
+        "//mediapipe/calculators/util:association_norm_rect_calculator",
+        "//mediapipe/calculators/util:hyunsoo_logger_calculator",
         "//mediapipe/modules/pose_detection:pose_detection_gpu",
     ],
 )
@@ -159,6 +164,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/core:split_vector_calculator",
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:from_image_calculator",
+        "//mediapipe/calculators/util:hyunsoo_logger_calculator",
         "//mediapipe/modules/pose_detection:pose_detection_cpu",
     ],
 )

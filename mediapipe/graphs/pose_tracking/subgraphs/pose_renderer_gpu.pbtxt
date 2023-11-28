@@ -4,14 +4,12 @@ type: "PoseRendererGpu"
 
 # GPU image. (GpuBuffer)
 input_stream: "IMAGE:input_image"
-# Pose landmarks. (NormalizedLandmarkList)
-input_stream: "LANDMARKS:pose_landmarks"
-# Segmentation mask. (GpuBuffer in RGBA, with the same mask values in R and A)
-input_stream: "SEGMENTATION_MASK:segmentation_mask"
-# Region of interest calculated based on landmarks. (NormalizedRect)
-input_stream: "ROI:roi"
-# Detected pose. (Detection)
-input_stream: "DETECTION:detection"
+# Pose landmarks. (std::vector<NormalizedLandmarkList>)
+input_stream: "LANDMARKS:multi_pose_landmarks"
+# Region of interest calculated based on landmarks. (std::vector<NormalizedRect>)
+input_stream: "ROI:multi_roi"
+# Detected pose. (std::vector<Detection>)
+input_stream: "DETECTION:pose_detections"
 
 # GPU image with rendered data. (GpuBuffer)
 output_stream: "IMAGE:output_image"
@@ -25,7 +23,7 @@ node {
 # Converts detections to drawing primitives for annotation overlay.
 node {
   calculator: "DetectionsToRenderDataCalculator"
-  input_stream: "DETECTION:detection"
+  input_stream: "DETECTIONS:pose_detections"
   output_stream: "RENDER_DATA:detection_render_data"
   node_options: {
     [type.googleapis.com/mediapipe.DetectionsToRenderDataCalculatorOptions] {
@@ -35,20 +33,129 @@ node {
   }
 }
 
-# Computes render data for landmarks.
+# Outputs each element of multi_pose_landmarks at a fake timestamp for the rest
+# of the graph to process. At the end of the loop, outputs the BATCH_END
+# timestamp for downstream calculators to inform them that all elements in the
+# vector have been processed.
+node { 
+  calculator: "BeginLoopNormalizedLandmarkListVectorCalculator"
+  input_stream: "ITERABLE:multi_pose_landmarks"
+  output_stream: "ITEM:single_pose_landmarks"
+  output_stream: "BATCH_END:landmark_timestamp"
+}
+
+# # Computes render data for landmarks.
+# node {
+#   calculator: "PoseLandmarksToRenderData"
+#   input_stream: "LANDMARKS:single_pose_landmarks"
+#   input_stream: "IMAGE_SIZE:image_size"
+#   output_stream: "RENDER_DATA:single_pose_landmarks_render_data"
+# }
+
+# Converts landmarks to drawing primitives for annotation overlay.
 node {
-  calculator: "PoseLandmarksToRenderData"
-  input_stream: "LANDMARKS:pose_landmarks"
-  input_stream: "ROI:roi"
-  input_stream: "IMAGE_SIZE:image_size"
-  output_stream: "RENDER_DATA:landmarks_render_data"
+  calculator: "LandmarksToRenderDataCalculator"
+  input_stream: "NORM_LANDMARKS:single_pose_landmarks"
+  output_stream: "RENDER_DATA:single_pose_landmarks_render_data"
+  node_options: {
+    [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
+      landmark_connections: 0
+      landmark_connections: 1
+      landmark_connections: 1
+      landmark_connections: 2
+      landmark_connections: 2
+      landmark_connections: 3
+      landmark_connections: 3
+      landmark_connections: 7
+      landmark_connections: 0
+      landmark_connections: 4
+      landmark_connections: 4
+      landmark_connections: 5
+      landmark_connections: 5
+      landmark_connections: 6
+      landmark_connections: 6
+      landmark_connections: 8
+      landmark_connections: 9
+      landmark_connections: 10
+      landmark_connections: 11
+      landmark_connections: 12
+      landmark_connections: 11
+      landmark_connections: 13
+      landmark_connections: 13
+      landmark_connections: 15
+      landmark_connections: 15
+      landmark_connections: 17
+      landmark_connections: 15
+      landmark_connections: 19
+      landmark_connections: 15
+      landmark_connections: 21
+      landmark_connections: 17
+      landmark_connections: 19
+      landmark_connections: 12
+      landmark_connections: 14
+      landmark_connections: 14
+      landmark_connections: 16
+      landmark_connections: 16
+      landmark_connections: 18
+      landmark_connections: 16
+      landmark_connections: 20
+      landmark_connections: 16
+      landmark_connections: 22
+      landmark_connections: 18
+      landmark_connections: 20
+      landmark_connections: 11
+      landmark_connections: 23
+      landmark_connections: 12
+      landmark_connections: 24
+      landmark_connections: 23
+      landmark_connections: 24
+      landmark_connections: 23
+      landmark_connections: 25
+      landmark_connections: 24
+      landmark_connections: 26
+      landmark_connections: 25
+      landmark_connections: 27
+      landmark_connections: 26
+      landmark_connections: 28
+      landmark_connections: 27
+      landmark_connections: 29
+      landmark_connections: 28
+      landmark_connections: 30
+      landmark_connections: 29
+      landmark_connections: 31
+      landmark_connections: 30
+      landmark_connections: 32
+      landmark_connections: 27
+      landmark_connections: 31
+      landmark_connections: 28
+      landmark_connections: 32
+
+      landmark_color { r: 255 g: 255 b: 255 }
+      connection_color { r: 255 g: 255 b: 255 }
+      thickness: 3.0
+      visualize_landmark_depth: false
+      utilize_visibility: true
+      visibility_threshold: 0.5
+    }
+  }
+}
+
+
+# Collects a RenderData object for each pose into a vector. Upon receiving the
+# BATCH_END timestamp, outputs the vector of RenderData at the BATCH_END
+# timestamp.
+node {
+  calculator: "EndLoopRenderDataCalculator"
+  input_stream: "ITEM:single_pose_landmarks_render_data"
+  input_stream: "BATCH_END:landmark_timestamp"
+  output_stream: "ITERABLE:multi_pose_landmarks_render_data"
 }
 
 # Converts normalized rects to drawing primitives for annotation overlay.
 node {
   calculator: "RectToRenderDataCalculator"
-  input_stream: "NORM_RECT:roi"
-  output_stream: "RENDER_DATA:roi_render_data"
+  input_stream: "NORM_RECTS:multi_roi"
+  output_stream: "RENDER_DATA:multi_roi_render_data"
   node_options: {
     [type.googleapis.com/mediapipe.RectToRenderDataCalculatorOptions] {
       filled: false
@@ -58,28 +165,12 @@ node {
   }
 }
 
-# Colors the segmentation mask with the color specified in the option.
-node {
-  calculator: "RecolorCalculator"
-  input_stream: "IMAGE_GPU:input_image"
-  input_stream: "MASK_GPU:segmentation_mask"
-  output_stream: "IMAGE_GPU:segmented_image"
-  node_options: {
-    [type.googleapis.com/mediapipe.RecolorCalculatorOptions] {
-      color { r: 0 g: 0 b: 255 }
-      mask_channel: RED
-      invert_mask: true
-      adjust_with_luminance: false
-    }
-  }
-}
-
 # Draws annotations and overlays them on top of the input images.
 node {
   calculator: "AnnotationOverlayCalculator"
-  input_stream: "IMAGE_GPU:segmented_image"
+  input_stream: "IMAGE_GPU:input_image"
   input_stream: "detection_render_data"
-  input_stream: "VECTOR:landmarks_render_data"
-  input_stream: "roi_render_data"
+  input_stream: "multi_roi_render_data"
+  input_stream: "VECTOR:0:multi_pose_landmarks_render_data"
   output_stream: "IMAGE_GPU:output_image"
 }

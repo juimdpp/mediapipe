@@ -136,7 +136,7 @@ node {
   output_stream: "filtered_detections"
   options: {
     [mediapipe.NonMaxSuppressionCalculatorOptions.ext] {
-      min_suppression_threshold: 0.3
+      min_suppression_threshold: 0.1
       overlap_type: INTERSECTION_OVER_UNION
       algorithm: WEIGHTED
     }

@@ -4,26 +4,11 @@ type: "PoseLandmarksToRenderData"
 
 # Pose landmarks. (NormalizedLandmarkList)
 input_stream: "LANDMARKS:pose_landmarks"
-# Region of interest calculated based on landmarks. (NormalizedRect)
-input_stream: "ROI:roi"
 # Image size. (pair<int, int>)
 input_stream: "IMAGE_SIZE:image_size"
 
 # The resulting render data. (vector<RenderData>)
 output_stream: "RENDER_DATA:merged_render_data"
-
-# Calculates rendering scale based on the pose roi.
-node {
-  calculator: "RectToRenderScaleCalculator"
-  input_stream: "NORM_RECT:roi"
-  input_stream: "IMAGE_SIZE:image_size"
-  output_stream: "RENDER_SCALE:render_scale"
-  node_options: {
-    [type.googleapis.com/mediapipe.RectToRenderScaleCalculatorOptions] {
-      multiplier: 0.0012
-    }
-  }
-}
 
 node {
   calculator: "SplitNormalizedLandmarkListCalculator"
@@ -40,7 +25,6 @@ node {
 node {
   calculator: "LandmarksToRenderDataCalculator"
   input_stream: "NORM_LANDMARKS:pose_landmarks"
-  input_stream: "RENDER_SCALE:render_scale"
   output_stream: "RENDER_DATA:landmarks_render_data"
   node_options: {
     [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
@@ -175,7 +159,6 @@ node {
 node {
   calculator: "LandmarksToRenderDataCalculator"
   input_stream: "NORM_LANDMARKS:visible_pose_landmarks"
-  input_stream: "RENDER_SCALE:render_scale"
   output_stream: "RENDER_DATA:landmarks_background_joints_render_data"
   node_options: {
     [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
@@ -193,7 +176,6 @@ node {
 node {
   calculator: "LandmarksToRenderDataCalculator"
   input_stream: "NORM_LANDMARKS:landmarks_left_side"
-  input_stream: "RENDER_SCALE:render_scale"
   output_stream: "RENDER_DATA:landmarks_left_joints_render_data"
   node_options: {
     [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
@@ -211,7 +193,6 @@ node {
 node {
   calculator: "LandmarksToRenderDataCalculator"
   input_stream: "NORM_LANDMARKS:landmarks_right_side"
-  input_stream: "RENDER_SCALE:render_scale"
   output_stream: "RENDER_DATA:landmarks_right_joints_render_data"
   node_options: {
     [type.googleapis.com/mediapipe.LandmarksToRenderDataCalculatorOptions] {
