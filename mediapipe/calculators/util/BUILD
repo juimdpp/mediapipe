@@ -1399,6 +1399,28 @@ cc_library(
 )
 
 mediapipe_proto_library(
+    name = "hyunsoo_forced_input_calculator_proto",
+    srcs = ["hyunsoo_forced_input_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto"
+    ],
+)
+
+cc_library(
+    name = "hyunsoo_forced_input_calculator",
+    srcs = ["hyunsoo_forced_input_calculator.cc"],
+    deps = [
+        ":hyunsoo_forced_input_calculator_cc_proto",
+        "//mediapipe/framework/formats:rect_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/status",
+    ],
+    alwayslink = 1,
+)
+
+mediapipe_proto_library(
     name = "hyunsoo_logger_calculator_proto",
     srcs = ["hyunsoo_logger_calculator.proto"],
     deps = [
