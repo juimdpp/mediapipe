@@ -114,6 +114,15 @@ node {
   output_stream: "ROI_FROM_LANDMARKS:pose_landmarks_roi"
   output_stream: "DETECTION:pose_detection"
 }
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "pose_landmarks"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "pose_landmarks"
+    }
+  }
+}
 
 # Predicts left and right hand landmarks based on the initial pose landmarks.
 node {
@@ -122,6 +131,15 @@ node {
   input_stream: "POSE_LANDMARKS:pose_landmarks"
   output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
   output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
+}
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "left_hand_landmarks"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "left_hand_landmarks"
+    }
+  }
 }
 
 # Extracts face-related pose landmarks.
@@ -143,4 +161,13 @@ node {
   input_stream: "FACE_LANDMARKS_FROM_POSE:face_landmarks_from_pose"
   input_side_packet: "REFINE_LANDMARKS:refine_face_landmarks"
   output_stream: "FACE_LANDMARKS:face_landmarks"
+}
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "face_landmarks"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "face_landmarks"
+    }
+  }
 }

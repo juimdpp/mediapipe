@@ -37,6 +37,7 @@ mediapipe_simple_subgraph(
         "//mediapipe/calculators/util:rect_to_render_data_calculator",
         "//mediapipe/calculators/util:rect_to_render_scale_calculator",
         "//mediapipe/modules/holistic_landmark:hand_wrist_for_pose",
+        "//mediapipe/calculators/util:hyunsoo_logger_calculator",
     ],
 )
 
@@ -48,6 +49,7 @@ cc_library(
         "//mediapipe/calculators/image:image_properties_calculator",
         "//mediapipe/calculators/util:annotation_overlay_calculator",
         "//mediapipe/modules/holistic_landmark:holistic_landmark_gpu",
+        "//mediapipe/calculators/util:hyunsoo_logger_calculator",
     ],
 )
 

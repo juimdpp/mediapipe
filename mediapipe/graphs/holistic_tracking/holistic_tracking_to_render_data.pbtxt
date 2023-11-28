@@ -755,3 +755,12 @@ node {
 
   output_stream: "render_data_vector"
 }
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "render_data_vector"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "render_data_vector"
+    }
+  }
+}
