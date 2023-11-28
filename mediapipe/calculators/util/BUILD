@@ -1398,6 +1398,28 @@ cc_library(
     alwayslink = 1,
 )
 
+mediapipe_proto_library(
+    name = "hyunsoo_logger_calculator_proto",
+    srcs = ["hyunsoo_logger_calculator.proto"],
+    deps = [
+        "//mediapipe/framework:calculator_options_proto",
+        "//mediapipe/framework:calculator_proto"
+    ],
+)
+
+cc_library(
+    name = "hyunsoo_logger_calculator",
+    srcs = ["hyunsoo_logger_calculator.cc"],
+    deps = [
+        ":hyunsoo_logger_calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:logging",
+        "@com_google_absl//absl/status",
+    ],
+    alwayslink = 1,
+)
+
+
 cc_library(
     name = "detection_classifications_merger_calculator",
     srcs = ["detection_classifications_merger_calculator.cc"],
