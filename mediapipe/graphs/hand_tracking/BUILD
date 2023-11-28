@@ -70,7 +70,10 @@ mediapipe_binary_graph(
     name = "hand_tracking_mobile_gpu_binary_graph",
     graph = "hand_tracking_mobile.pbtxt",
     output_name = "hand_tracking_mobile_gpu.binarypb",
-    deps = [":mobile_calculators"],
+    deps = [
+        ":mobile_calculators",
+        "//mediapipe/calculators/util:hyunsoo_logger_calculator",
+    ],
 )
 
 cc_library(
