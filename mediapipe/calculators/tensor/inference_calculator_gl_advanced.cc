@@ -17,6 +17,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <chrono>
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -369,8 +370,24 @@ absl::Status InferenceCalculatorGlAdvancedImpl::Process(CalculatorContext* cc) {
   RET_CHECK(!input_tensors.empty());
   auto output_tensors = absl::make_unique<std::vector<Tensor>>();
 
+  auto currentTime = std::chrono::steady_clock::now();
+  auto duration = currentTime.time_since_epoch();
+  auto milliseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+  LOG(INFO) << "Hyunsoo - InferenceCalculatorGlAdvancedImpl start | " 
+            << milliseconds 
+            << " / " << cc->InputTimestamp().DebugString()
+            << " / " << cc->InputTimestamp().DebugString()
+            << "\n";
   ASSIGN_OR_RETURN(*output_tensors,
                    gpu_inference_runner_->Process(cc, input_tensors));
+  currentTime = std::chrono::steady_clock::now();
+  duration = currentTime.time_since_epoch();
+  milliseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+  LOG(INFO) << "Hyunsoo - InferenceCalculatorGlAdvancedImpl end | " 
+            << milliseconds 
+            << " / " << cc->InputTimestamp().DebugString()
+            << " / " << cc->InputTimestamp().DebugString()
+            << "\n";
 
   kOutTensors(cc).Send(std::move(output_tensors));
   return absl::OkStatus();

@@ -63,7 +63,7 @@ class InferenceCalculatorSelectorImpl
     for (const auto& suffix : impls) {
       const auto impl = absl::StrCat("InferenceCalculator", suffix);
       if (!mediapipe::CalculatorBaseRegistry::IsRegistered(impl)) continue;
-      VLOG(1) << "Using " << suffix << " for InferenceCalculator with "
+      LOG(INFO) << "Hyunsoo - Using " << suffix << " for InferenceCalculator with "
               << (options.has_model_path()
                       ? "model " + options.model_path()
                       : "output_stream " + subgraph_node.output_stream(0));

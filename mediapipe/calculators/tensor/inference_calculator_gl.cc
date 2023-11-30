@@ -17,6 +17,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <chrono>
 
 #include "absl/memory/memory.h"
 #include "absl/status/status.h"
@@ -264,6 +265,7 @@ absl::Status InferenceCalculatorGlImpl::Open(CalculatorContext* cc) {
 }
 
 absl::Status InferenceCalculatorGlImpl::Process(CalculatorContext* cc) {
+  LOG(INFO) << "Hyunsoo - InferenceCalculatorGlImpl used\n";
   if (kInTensors(cc).IsEmpty()) {
     return absl::OkStatus();
   }
@@ -272,8 +274,24 @@ absl::Status InferenceCalculatorGlImpl::Process(CalculatorContext* cc) {
   RET_CHECK(!input_tensors.empty());
   auto output_tensors = absl::make_unique<std::vector<Tensor>>();
 
+  auto currentTime = std::chrono::steady_clock::now();
+  auto duration = currentTime.time_since_epoch();
+  auto milliseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+  LOG(INFO) << "Hyunsoo - InferenceCalculatorGlImpl start | " 
+            << milliseconds 
+            << " / " << cc->InputTimestamp().DebugString()
+            << " / " << cc->InputTimestamp().DebugString()
+            << "\n";
   MP_RETURN_IF_ERROR(
       gpu_inference_runner_->Process(cc, input_tensors, *output_tensors));
+  currentTime = std::chrono::steady_clock::now();
+  duration = currentTime.time_since_epoch();
+  milliseconds = std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
+  LOG(INFO) << "Hyunsoo - InferenceCalculatorGlImpl end | " 
+            << milliseconds 
+            << " / " << cc->InputTimestamp().DebugString()
+            << " / " << cc->InputTimestamp().DebugString()
+            << "\n";
 
   kOutTensors(cc).Send(std::move(output_tensors));
   return absl::OkStatus();
