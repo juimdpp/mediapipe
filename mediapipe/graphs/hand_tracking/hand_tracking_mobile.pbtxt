@@ -12,7 +12,7 @@ input_side_packet: "num_hands"
 input_side_packet: "model_complexity"
 
 # GPU image. (GpuBuffer)
-output_stream: "output_video"
+output_stream: "passed_output_video"
 # Collection of detected/predicted hands, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
 output_stream: "hand_landmarks"
@@ -37,11 +37,21 @@ node {
   }
   output_stream: "throttled_input_video"
 }
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "A:throttled_input_video"
+  output_stream: "A:passed_throttled_input_video"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "input_image"
+    }
+  }
+}
 
 # Detects/tracks hand landmarks.
 node {
   calculator: "HandLandmarkTrackingGpu"
-  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "IMAGE:passed_throttled_input_video"
   input_side_packet: "MODEL_COMPLEXITY:model_complexity"
   input_side_packet: "NUM_HANDS:num_hands"
   output_stream: "LANDMARKS:hand_landmarks"
@@ -52,10 +62,11 @@ node {
 }
 node {
   calculator: "HyunsooLoggerCalculator"
-  input_stream: "hand_landmarks"
+  input_stream: "A:hand_landmarks"
+  output_stream: "A:passed_hand_landmarks"
   options: {
     [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
-      log_tag: "hand_landmarks"
+      log_tag: "model_output"
     }
   }
 }
@@ -64,11 +75,21 @@ node {
 # images (see hand_renderer_gpu.pbtxt).
 node {
   calculator: "HandRendererSubgraph"
-  input_stream: "IMAGE:throttled_input_video"
+  input_stream: "IMAGE:passed_throttled_input_video"
   input_stream: "DETECTIONS:palm_detections"
-  input_stream: "LANDMARKS:hand_landmarks"
+  input_stream: "LANDMARKS:passed_hand_landmarks"
   input_stream: "HANDEDNESS:handedness"
   input_stream: "NORM_RECTS:0:hand_rects_from_palm_detections"
   input_stream: "NORM_RECTS:1:hand_rects_from_landmarks"
   output_stream: "IMAGE:output_video"
+}
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "A:output_video"
+  output_stream: "A:passed_output_video"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "after_render"
+    }
+  }
 }

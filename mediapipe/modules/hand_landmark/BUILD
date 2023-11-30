@@ -93,6 +93,7 @@ mediapipe_simple_subgraph(
         ":hand_landmark_landmarks_to_roi",
         ":palm_detection_detection_to_roi",
         "//mediapipe/calculators/util:hyunsoo_logger_calculator",
+        "//mediapipe/calculators/util:hyunsoo_forced_input_calculator",
         "//mediapipe/calculators/core:begin_loop_calculator",
         "//mediapipe/calculators/core:clip_vector_size_calculator",
         "//mediapipe/calculators/core:constant_side_packet_calculator",
