@@ -4,7 +4,7 @@
 input_stream: "input_video"
 
 # Output image with rendered results. (GpuBuffer)
-output_stream: "output_video"
+output_stream: "passed_output_video"
 # Pose landmarks. (NormalizedLandmarkList)
 output_stream: "pose_landmarks"
 
@@ -15,6 +15,15 @@ node {
   node_options: {
     [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
       packet { bool_value: false }
+    }
+  }
+}
+node {
+  calculator: "ConstantSidePacketCalculator"
+  output_side_packet: "PACKET:model_complexity"
+  node_options: {
+    [type.googleapis.com/mediapipe.ConstantSidePacketCalculatorOptions]: {
+      packet { int_value: 1 }
     }
   }
 }
@@ -32,30 +41,61 @@ node {
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
-  input_stream: "FINISHED:output_video"
+  input_stream: "FINISHED:passed_output_video"
   input_stream_info: {
     tag_index: "FINISHED"
     back_edge: true
   }
   output_stream: "throttled_input_video"
 }
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "A:throttled_input_video"
+  output_stream: "A:passed_throttled_input_video"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "input_image"
+    }
+  }
+}
 
 # Subgraph that detects poses and corresponding landmarks.
 node {
   calculator: "PoseLandmarkGpu"
   input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
-  input_stream: "IMAGE:throttled_input_video"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  input_stream: "IMAGE:passed_throttled_input_video"
   output_stream: "LANDMARKS:pose_landmarks"
   output_stream: "DETECTION:pose_detection"
   output_stream: "ROI_FROM_LANDMARKS:roi_from_landmarks"
+}
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "A:pose_landmarks"
+  output_stream: "A:passed_pose_landmarks"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "model_output"
+    }
+  }
 }
 
 # Subgraph that renders pose-landmark annotation onto the input image.
 node {
   calculator: "PoseRendererGpu"
-  input_stream: "IMAGE:throttled_input_video"
-  input_stream: "LANDMARKS:pose_landmarks"
+  input_stream: "IMAGE:passed_throttled_input_video"
+  input_stream: "LANDMARKS:passed_pose_landmarks"
   input_stream: "DETECTION:pose_detection"
   input_stream: "ROI:roi_from_landmarks"
   output_stream: "IMAGE:output_video"
+}
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "A:output_video"
+  output_stream: "A:passed_output_video"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "after_render"
+    }
+  }
 }

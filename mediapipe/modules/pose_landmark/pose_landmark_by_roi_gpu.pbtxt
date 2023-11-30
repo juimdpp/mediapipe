@@ -26,7 +26,7 @@ type: "PoseLandmarkByRoiGpu"
 input_stream: "IMAGE:image"
 # ROI (region of interest) within the given image where a pose is located.
 # (NormalizedRect)
-input_stream: "ROI:roi"
+input_stream: "ROI:roi0"
 
 # Whether to predict the segmentation mask. If unspecified, functions as set to
 # false. (bool)
@@ -101,6 +101,17 @@ node {
   output_stream: "SIZE:image_size"
 }
 
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "A:roi0"
+  output_stream: "A:roi"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "PoseLandmarkByRoiGpu"
+    }
+  }
+}
+
 # Crops and transforms the specified ROI in the input image into an image patch
 # represented as a tensor of dimension expected by the corresponding ML model,
 # while maintaining the aspect ratio of the ROI (which can be different from
@@ -110,7 +121,7 @@ node: {
   calculator: "ImageToTensorCalculator"
   input_stream: "IMAGE_GPU:image"
   input_stream: "NORM_RECT:roi"
-  output_stream: "TENSORS:input_tensors"
+  output_stream: "TENSORS:input_tensors0"
   output_stream: "LETTERBOX_PADDING:letterbox_padding"
   output_stream: "MATRIX:transformation_matrix"
   options: {
@@ -126,6 +137,17 @@ node: {
     }
   }
 }
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "A:input_tensors0"
+  output_stream: "A:input_tensors"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "ImageToTensorCalculator"
+    }
+  }
+}
+
 
 # Loads the pose landmark TF Lite model.
 node {
@@ -139,8 +161,19 @@ node {
   calculator: "InferenceCalculator"
   input_side_packet: "MODEL:model"
   input_stream: "TENSORS:input_tensors"
-  output_stream: "TENSORS:output_tensors"
+  output_stream: "TENSORS:output_tensors0"
 }
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "A:output_tensors0"
+  output_stream: "A:output_tensors"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "InferenceCalculator"
+    }
+  }
+}
+
 
 # Decodes the tensors into the corresponding landmark and segmentation mask
 # representation.
@@ -148,11 +181,22 @@ node {
   calculator: "TensorsToPoseLandmarksAndSegmentation"
   input_side_packet: "ENABLE_SEGMENTATION:enable_segmentation"
   input_stream: "TENSORS:output_tensors"
-  output_stream: "LANDMARKS:roi_landmarks"
+  output_stream: "LANDMARKS:roi_landmarks0"
   output_stream: "AUXILIARY_LANDMARKS:roi_auxiliary_landmarks"
   output_stream: "WORLD_LANDMARKS:roi_world_landmarks"
   output_stream: "SEGMENTATION_MASK:roi_segmentation_mask"
 }
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "A:roi_landmarks0"
+  output_stream: "A:roi_landmarks"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "TensorsToPoseLandmarksAndSegmentation"
+    }
+  }
+}
+
 
 # Projects the landmarks and segmentation mask in the local coordinates of the
 # (potentially letterboxed) ROI back to the global coordinates of the full input
@@ -167,8 +211,18 @@ node {
   input_stream: "AUXILIARY_LANDMARKS:roi_auxiliary_landmarks"
   input_stream: "WORLD_LANDMARKS:roi_world_landmarks"
   input_stream: "SEGMENTATION_MASK:roi_segmentation_mask"
-  output_stream: "LANDMARKS:landmarks"
+  output_stream: "LANDMARKS:landmarks0"
   output_stream: "AUXILIARY_LANDMARKS:auxiliary_landmarks"
   output_stream: "WORLD_LANDMARKS:world_landmarks"
   output_stream: "SEGMENTATION_MASK:segmentation_mask"
+}
+node {
+  calculator: "HyunsooLoggerCalculator"
+  input_stream: "A:landmarks0"
+  output_stream: "A:landmarks"
+  options: {
+    [mediapipe.HyunsooLoggerCalculatorOptions.ext] {
+      log_tag: "PoseLandmarksAndSegmentationInverseProjection"
+    }
+  }
 }
