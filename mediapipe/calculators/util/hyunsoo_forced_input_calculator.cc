@@ -65,11 +65,13 @@ absl::Status HyunsooForcedInputCalculator::Open(CalculatorContext* cc) {
 absl::Status HyunsooForcedInputCalculator::Process(CalculatorContext* cc) {
   std::vector<NormalizedRect> input_iterable = 
     cc->Inputs().Tag("INPUT_ITERABLE").Get<std::vector<NormalizedRect>>();
-  NormalizedRect input_item = input_iterable.front();
-  
   auto output = absl::make_unique<std::vector<NormalizedRect>>();
-  for(int i=0; i<number_detections; i++){
-    output->push_back(input_item);
+  LOG(INFO) << "HyunsooForcedInputCalculator ** origsize " << input_iterable.size() << "\n";
+  if (input_iterable.size() < number_detections){
+    NormalizedRect input_item = input_iterable.front();
+    for(int i=0; i<number_detections; i++){
+      output->push_back(input_item);
+    }
   }
   LOG(INFO) << "HyunsooForcedInputCalculator ** " << output->size() << "\n";
   cc->Outputs().Tag("OUTPUT_ITERABLE").Add(output.release(), cc->InputTimestamp());

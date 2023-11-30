@@ -1436,6 +1436,7 @@ cc_library(
         ":hyunsoo_logger_calculator_cc_proto",
         "//mediapipe/framework:calculator_framework",
         "//mediapipe/framework/port:logging",
+        "//mediapipe/framework/port:status",
         "@com_google_absl//absl/status",
     ],
     alwayslink = 1,
